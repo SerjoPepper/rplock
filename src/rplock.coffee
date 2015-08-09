@@ -3,6 +3,8 @@ promise = require 'bluebird'
 ms = require 'ms'
 redis = require 'redis'
 
+promise.promisifyAll(redis)
+
 toMs = (val) ->
   if typeof val is 'string' then ms(val) / 1e3 else val
 
