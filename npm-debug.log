@@ -49,10 +49,10 @@
 18 silly publish      grunt: '^0.4.5',
 18 silly publish      'grunt-coffeelint': '0.0.13',
 18 silly publish      'grunt-contrib-coffee': '^0.13.0' },
-18 silly publish   gitHead: '65f892dcbd04c05e86ae5d680868aafd88ab9c9f',
+18 silly publish   gitHead: '64b8f349d9cad7c8c849ada7413bc169a58e3b25',
 18 silly publish   readme: 'ERROR: No README data found!',
 18 silly publish   _id: 'rplock@1.0.1',
-18 silly publish   _shasum: 'bd1a5ed1785fb3362cc912c4dc99991d5cd4a1a1',
+18 silly publish   _shasum: '8e87c1a93e05e6898f69c07d5887d0789dd5b119',
 18 silly publish   _from: '.' }
 19 verbose getPublishConfig undefined
 20 silly mapToRegistry name rplock
@@ -63,22 +63,22 @@
 25 silly publish uploading /home/serjopepper/.npm/rplock/1.0.1/package.tgz
 26 verbose request uri https://registry.npmjs.org/rplock
 27 verbose request sending authorization for write operation
-28 info attempt registry request try #1 at 11:23:11 PM
+28 info attempt registry request try #1 at 11:25:16 PM
 29 verbose request using bearer token for auth
-30 verbose request id e5709c44814174d7
+30 verbose request id 00717fbbb6f0e2a2
 31 http request PUT https://registry.npmjs.org/rplock
 32 http 403 https://registry.npmjs.org/rplock
 33 verbose headers { 'content-type': 'application/json',
 33 verbose headers   'cache-control': 'max-age=60',
 33 verbose headers   'content-length': '95',
 33 verbose headers   'accept-ranges': 'bytes',
-33 verbose headers   date: 'Sun, 09 Aug 2015 20:23:27 GMT',
+33 verbose headers   date: 'Sun, 09 Aug 2015 20:25:33 GMT',
 33 verbose headers   via: '1.1 varnish',
 33 verbose headers   connection: 'keep-alive',
-33 verbose headers   'x-served-by': 'cache-fra1237-FRA',
+33 verbose headers   'x-served-by': 'cache-ams4128-AMS',
 33 verbose headers   'x-cache': 'MISS',
 33 verbose headers   'x-cache-hits': '0',
-33 verbose headers   'x-timer': 'S1439151807.098527,VS0,VE734' }
+33 verbose headers   'x-timer': 'S1439151932.299271,VS0,VE979' }
 34 verbose request invalidating /home/serjopepper/.npm/registry.npmjs.org/rplock on PUT
 35 error publish Failed PUT 403
 36 verbose stack Error: "You cannot publish over the previously published version 1.0.1." : rplock
