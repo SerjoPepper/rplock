@@ -17,3 +17,5 @@ module.exports = (grunt) ->
       }
     }
   }
+
+  grunt.registerTask 'prepublish', ['coffeelint', 'coffee:compile']

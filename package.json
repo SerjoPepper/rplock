@@ -1,10 +1,11 @@
 {
   "name": "rplock",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Promisified redis lock",
   "main": "lib/rplock.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm install; grunt prepublish"
   },
   "repository": {
     "type": "git",
