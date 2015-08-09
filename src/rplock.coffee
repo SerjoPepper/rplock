@@ -11,7 +11,7 @@ class Lock
     ttl: '10s'
     pollingTimeout: '50ms'
     attempts: 10
-    ns: 'lock'
+    ns: 'rplock'
   }
 
   constructor: (config = {}) ->
@@ -21,7 +21,7 @@ class Lock
   acquire: (key, [options]..., resolver) ->
     options ||= {}
     options = _.extend({}, @config, options)
-    key = options.ns + ':' + key
+    key = options.ns + ':lock:' + key
     ttl = toMs(options.ttl)
     pollingTimeout = toMs(options.pollingTimeout)
     attempts = options.attempts || Infinity
