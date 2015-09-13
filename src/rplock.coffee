@@ -6,7 +6,7 @@ redis = require 'redis'
 promise.promisifyAll(redis)
 
 toMs = (val) ->
-  if typeof val is 'string' then ms(val) / 1e3 else val
+  if typeof val is 'string' then ms(val) else val
 
 class Lock
   @config: {
@@ -17,7 +17,7 @@ class Lock
   }
 
   constructor: (config = {}) ->
-    @config = _.extend({}, config, Lock.config)
+    @config = _.extend({}, Lock.config, config)
     @client = redis.createClient(@config.redis)
 
   acquire: (key, [options]..., resolver) ->

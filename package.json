@@ -1,6 +1,6 @@
 {
   "name": "rplock",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Promisified redis lock",
   "main": "lib/rplock.js",
   "scripts": {
