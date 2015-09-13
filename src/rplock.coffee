@@ -12,7 +12,7 @@ class Lock
   @config: {
     ttl: '10s'
     pollingTimeout: '50ms'
-    attempts: 10
+    attempts: Infinity
     ns: 'rplock'
   }
 
