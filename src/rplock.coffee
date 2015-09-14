@@ -19,11 +19,13 @@ class Lock
   constructor: (config = {}) ->
     @config = _.extend({}, Lock.config, config)
     @client = redis.createClient(@config.redis)
+    @subClient = redis.createClient(@config.redis)
+    @subClient.psubscribe(@config.ns + '*')
 
   acquire: (key, [options]..., resolver) ->
     options ||= {}
     options = _.extend({}, @config, options)
-    key = options.ns + ':lock:' + key
+    key = @config.ns + ':' + key
     ttl = toMs(options.ttl)
     pollingTimeout = toMs(options.pollingTimeout)
     attempts = options.attempts || Infinity
@@ -34,13 +36,10 @@ class Lock
         _promise?.resolve()
 
     subscribe = =>
-      @client.subscribe(key)
-      @client.on 'message', onMessage
+      @subClient.on 'message', onMessage
 
     unsubscribe = =>
-      @client.unsubscribe(key)
-      @client.off 'message', onMessage
-
+      @subClient.removeListener 'message', onMessage
 
     acquireLockAndResolve = =>
       unsubscribe()
@@ -49,8 +48,8 @@ class Lock
         if attempts-- > 0
           unless acquired
             subscribe()
-            promise.delay(ttl).then(-> _promise.resolve())
-            p.promise.then(acquireLockAndResolve)
+            promise.delay(pollingTimeout).then(-> _promise.resolve())
+            _promise.promise.then(acquireLockAndResolve)
           else
             # 1. unsubscribe
             promise[typeof resolver is 'function' and 'try' or 'resolve'](resolver)
@@ -58,11 +57,11 @@ class Lock
           promise.reject('can\'t acquire lock')
 
     releaseLock = =>
+      @client.publish(key, 'release')
       @client.delAsync(key)
 
-    acquireLockAndResolve().then (result) =>
-      releaseLock().then =>
-        @client.publish(key, 'release')
+    acquireLockAndResolve().then (result) ->
+      releaseLock().then ->
         result
 
 
