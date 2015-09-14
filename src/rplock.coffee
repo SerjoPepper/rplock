@@ -11,7 +11,7 @@ toMs = (val) ->
 class Lock
   @config: {
     ttl: '10s'
-    pollingTimeout: '1000ms'
+    pollingTimeout: '2s'
     attempts: Infinity
     ns: 'rplock'
   }
@@ -31,15 +31,15 @@ class Lock
     attempts = options.attempts || Infinity
     _promise = null
 
-    onMessage = (channel, message) ->
+    onMessage = (pattern, channel, message) ->
       if channel is key and message is 'release'
         _promise?.resolve()
 
     subscribe = =>
-      @subClient.on 'message', onMessage
+      @subClient.on 'pmessage', onMessage
 
     unsubscribe = =>
-      @subClient.removeListener 'message', onMessage
+      @subClient.removeListener 'pmessage', onMessage
 
     acquireLockAndResolve = =>
       unsubscribe()
@@ -48,7 +48,7 @@ class Lock
         if attempts-- > 0
           unless acquired
             subscribe()
-            promise.delay(pollingTimeout).then(-> _promise.resolve())
+            promise.delay(pollingTimeout).then -> _promise.resolve()
             _promise.promise.then(acquireLockAndResolve)
           else
             # 1. unsubscribe
