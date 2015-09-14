@@ -11,7 +11,7 @@ toMs = (val) ->
 class Lock
   @config: {
     ttl: '10s'
-    pollingTimeout: '50ms'
+    pollingTimeout: '1000ms'
     attempts: Infinity
     ns: 'rplock'
   }
@@ -27,13 +27,32 @@ class Lock
     ttl = toMs(options.ttl)
     pollingTimeout = toMs(options.pollingTimeout)
     attempts = options.attempts || Infinity
+    _promise = null
+
+    onMessage = (channel, message) =>
+      if channel is key and message is 'release'
+        _promise?.resolve()
+
+    subscribe = =>
+      @client.subscribe(key)
+      @client.on 'message', onMessage
+
+    unsubscribe = =>
+      @client.unsubscribe(key)
+      @client.off 'message', onMessage
+
 
     acquireLockAndResolve = =>
-      @client.setAsync(key, String(new Date), 'PX', ttl, 'NX').then (acquired) ->
+      unsubscribe()
+      @client.setAsync(key, String(new Date), 'PX', ttl, 'NX').then (acquired) =>
+        _promise = promise.defer()
         if attempts-- > 0
           unless acquired
-            promise.delay(pollingTimeout).then(acquireLockAndResolve)
+            subscribe()
+            promise.delay(ttl).then(-> _promise.resolve())
+            p.promise.then(acquireLockAndResolve)
           else
+            # 1. unsubscribe
             promise[typeof resolver is 'function' and 'try' or 'resolve'](resolver)
         else
           promise.reject('can\'t acquire lock')
@@ -41,8 +60,11 @@ class Lock
     releaseLock = =>
       @client.delAsync(key)
 
-    acquireLockAndResolve().then (result) ->
-      releaseLock().then -> result
+    acquireLockAndResolve().then (result) =>
+      releaseLock().then =>
+        @client.publish(key, 'release')
+        result
+
 
 
 module.exports = (config) ->
