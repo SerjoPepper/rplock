@@ -29,7 +29,7 @@ class Lock
     attempts = options.attempts || Infinity
     _promise = null
 
-    onMessage = (channel, message) =>
+    onMessage = (channel, message) ->
       if channel is key and message is 'release'
         _promise?.resolve()
 
@@ -44,7 +44,7 @@ class Lock
 
     acquireLockAndResolve = =>
       unsubscribe()
-      @client.setAsync(key, String(new Date), 'PX', ttl, 'NX').then (acquired) =>
+      @client.setAsync(key, String(new Date), 'PX', ttl, 'NX').then (acquired) ->
         _promise = promise.defer()
         if attempts-- > 0
           unless acquired
