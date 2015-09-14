@@ -42,8 +42,8 @@ class Lock
       @subClient.removeListener 'pmessage', onMessage
 
     acquireLockAndResolve = =>
-      unsubscribe()
       @client.setAsync(key, String(new Date), 'PX', ttl, 'NX').then (acquired) ->
+        unsubscribe()
         _promise = promise.defer()
         if attempts-- > 0
           unless acquired
