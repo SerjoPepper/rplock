@@ -60,10 +60,8 @@ class Lock
       @client.publish(key, 'release')
       @client.delAsync(key)
 
-    acquireLockAndResolve().then (result) ->
-      releaseLock().then ->
-        result
-
+    acquireLockAndResolve().finally ->
+      releaseLock()
 
 
 module.exports = (config) ->
