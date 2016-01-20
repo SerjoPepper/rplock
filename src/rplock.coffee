@@ -20,6 +20,9 @@ class Lock
     @config = _.extend({}, Lock.config, config)
     @client = redis.createClient(@config.redis)
     @subClient = redis.createClient(@config.redis)
+    if @config.redis.db
+      @client.select(@config.redis.db)
+      @client.subClient(@config.redis.db)
     @subClient.psubscribe(@config.ns + '*')
 
   acquire: (key, [options]..., resolver) ->
@@ -51,8 +54,10 @@ class Lock
             promise.delay(pollingTimeout).then -> _promise.resolve()
             _promise.promise.then(acquireLockAndResolve)
           else
-            # 1. unsubscribe
-            promise[typeof resolver is 'function' and 'try' or 'resolve'](resolver)
+            if typeof resolver is 'function'
+              promise.resolve co resolver
+            else
+              promise.resolve resolver
         else
           promise.reject('can\'t acquire lock')
 
