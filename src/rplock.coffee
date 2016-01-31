@@ -33,7 +33,7 @@ class Lock
       @client.subClient(@config.redis.db)
     @subClient.psubscribe(@config.ns + '*')
 
-  _acquireLocal: (key, options, resolver) ->
+  _acquireMemory: (key, options, resolver) ->
     key = options.ns + ':' + key
     timeout = toMs(options.timeout)
     event = "release:#{key}"
@@ -114,8 +114,8 @@ class Lock
   acquire: (key, [options]..., resolver) ->
     options ||= {}
     options = _.extend({}, @config, options)
-    if options.local
-      @_acquireLocal(key, options, resolver)
+    if options.memory
+      @_acquireMemory(key, options, resolver)
     else
       @_acquireRedis(key, options, resolver)
 
