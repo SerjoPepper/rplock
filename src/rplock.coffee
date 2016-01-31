@@ -2,7 +2,7 @@ _ = require 'lodash'
 promise = require 'bluebird'
 ms = require 'ms'
 redis = require 'redis'
-
+EventEmitter = require 'events'
 promise.promisifyAll(redis)
 
 toMs = (val) ->
@@ -11,10 +11,18 @@ toMs = (val) ->
 class Lock
   @config: {
     ttl: '10s'
+    timeout: '30s'
     pollingTimeout: '2s'
     attempts: Infinity
     ns: 'rplock'
   }
+
+  @localKeys: {}
+
+  @events: do ->
+    events = new EventEmitter
+    events.setMaxListeners(0)
+    events
 
   constructor: (config = {}) ->
     @config = _.extend({}, Lock.config, config)
@@ -25,10 +33,45 @@ class Lock
       @client.subClient(@config.redis.db)
     @subClient.psubscribe(@config.ns + '*')
 
-  acquire: (key, [options]..., resolver) ->
-    options ||= {}
-    options = _.extend({}, @config, options)
-    key = @config.ns + ':' + key
+  _acquireLocal: (key, options, resolver) ->
+    key = options.ns + ':' + key
+    timeout = toMs(options.timeout)
+    event = "release:#{key}"
+    defer = promise.defer()
+    releaseTimeout = null
+
+    tryAcquire = ->
+      unless Lock.localKeys[key]
+        if releaseTimeout
+          clearTimeout(releaseTimeout)
+          releaseTimeout = null
+        Lock.events.removeListener(event, tryAcquire)
+        Lock.localKeys[key] = true
+        p = if typeof resolver is 'function'
+          promise.resolve co resolver
+        else
+          promise.resolve resolver
+        p.then(defer.resolve.bind(defer), defer.reject.bind(defer)).finally(release)
+      else
+        unless releaseTimeout
+          releaseTimeout = setTimeout(onTimeout, timeout)
+          Lock.events.on(event, tryAcquire)
+
+    onTimeout = ->
+      Lock.events.removeListener(event, tryAcquire)
+      defer.reject('Acquire timeout')
+
+    release = ->
+      Lock.localKeys[key] = false
+      Lock.events.emit(event)
+
+    tryAcquire()
+
+    defer.promise
+
+
+  _acquireRedis: (key, options, resolver) ->
+    key = options.ns + ':' + key
     ttl = toMs(options.ttl)
     pollingTimeout = toMs(options.pollingTimeout)
     attempts = options.attempts || Infinity
@@ -67,6 +110,15 @@ class Lock
 
     acquireLockAndResolve().finally ->
       releaseLock()
+
+  acquire: (key, [options]..., resolver) ->
+    options ||= {}
+    options = _.extend({}, @config, options)
+    if options.local
+      @_acquireLocal(key, options, resolver)
+    else
+      @_acquireRedis(key, options, resolver)
+
 
 
 module.exports = (config) ->
