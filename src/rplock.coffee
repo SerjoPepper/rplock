@@ -3,6 +3,7 @@ promise = require 'bluebird'
 ms = require 'ms'
 redis = require 'redis'
 EventEmitter = require 'events'
+co = require 'co'
 promise.promisifyAll(redis)
 
 toMs = (val) ->
