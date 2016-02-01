@@ -52,7 +52,8 @@ class Lock
           promise.resolve co resolver
         else
           promise.resolve resolver
-        p.then(defer.resolve.bind(defer), defer.reject.bind(defer)).finally(release)
+        p.finally(release)
+        p.then(defer.resolve.bind(defer), defer.reject.bind(defer))
       else
         unless releaseTimeout
           releaseTimeout = setTimeout(onTimeout, timeout)
@@ -60,7 +61,7 @@ class Lock
 
     onTimeout = ->
       Lock.events.removeListener(event, tryAcquire)
-      defer.reject('Acquire timeout')
+      defer.reject('Acquire timeout: ' + key)
 
     release = ->
       Lock.localKeys[key] = false
