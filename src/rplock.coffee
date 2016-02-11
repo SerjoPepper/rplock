@@ -12,7 +12,7 @@ toMs = (val) ->
 class Lock
   @config: {
     ttl: '10s'
-    timeout: '30s'
+    # timeout: '30s'
     pollingTimeout: '2s'
     attempts: Infinity
     ns: 'rplock'
@@ -35,18 +35,16 @@ class Lock
     @subClient.psubscribe(@config.ns + '*')
 
   _acquireMemory: (key, options, resolver) ->
+
     key = options.ns + ':' + key
-    timeout = toMs(options.timeout)
+    timeout = toMs(options.ttl)
     event = "release:#{key}"
     defer = promise.defer()
     releaseTimeout = null
 
     tryAcquire = ->
       unless Lock.localKeys[key]
-        if releaseTimeout
-          clearTimeout(releaseTimeout)
-          releaseTimeout = null
-        Lock.events.removeListener(event, tryAcquire)
+        clear()
         Lock.localKeys[key] = true
         p = if typeof resolver is 'function'
           promise.resolve co resolver
@@ -59,12 +57,19 @@ class Lock
           releaseTimeout = setTimeout(onTimeout, timeout)
           Lock.events.on(event, tryAcquire)
 
+    clear = ->
+      if releaseTimeout
+        clearTimeout(releaseTimeout)
+        releaseTimeout = null
+        Lock.events.removeListener(event, tryAcquire)
+
+
     onTimeout = ->
-      Lock.events.removeListener(event, tryAcquire)
+      clear()
       defer.reject('Acquire timeout: ' + key)
 
     release = ->
-      Lock.localKeys[key] = false
+      delete Lock.localKeys[key]
       Lock.events.emit(event)
 
     tryAcquire()
