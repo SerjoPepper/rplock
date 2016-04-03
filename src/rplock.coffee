@@ -13,7 +13,7 @@ class Lock
   @config: {
     ttl: '10s'
     # timeout: '30s'
-    pollingTimeout: '2s'
+    pollingTimeout: '5s'
     attempts: Infinity
     ns: 'rplock'
   }
@@ -115,7 +115,8 @@ class Lock
       @client.publish(key, 'release')
       @client.delAsync(key)
 
-    acquireLockAndResolve().finally ->
+    acquireLockAndResolve().timeout(ttl, 'Acquire timeout: ' + key)
+    .finally ->
       releaseLock()
 
   acquire: (key, [options]..., resolver) ->
