@@ -115,7 +115,7 @@ class Lock
       @client.publish(key, 'release')
       @client.delAsync(key)
 
-    acquireLockAndResolve().timeout(ttl, 'Acquire timeout: ' + key)
+    acquireLockAndResolve()
     .finally ->
       releaseLock()
 
