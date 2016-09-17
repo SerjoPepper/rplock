@@ -4,7 +4,10 @@ ms = require 'ms'
 redis = require 'redis'
 EventEmitter = require 'events'
 co = require 'co'
+hat = require 'hat'
 promise.promisifyAll(redis)
+
+unlockScript = 'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end'
 
 toMs = (val) ->
   if typeof val is 'string' then ms(val) else val
@@ -83,6 +86,7 @@ class Lock
     pollingTimeout = toMs(options.pollingTimeout)
     attempts = options.attempts || Infinity
     _promise = null
+    value = hat()
 
     onMessage = (pattern, channel, message) ->
       if channel is key and message is 'release'
@@ -95,7 +99,7 @@ class Lock
       @subClient.removeListener 'pmessage', onMessage
 
     acquireLockAndResolve = =>
-      @client.setAsync(key, String(new Date), 'PX', ttl, 'NX').then (acquired) ->
+      @client.setAsync(key, value, 'PX', ttl, 'NX').then (acquired) ->
         unsubscribe()
         _promise = promise.defer()
         if attempts-- > 0
@@ -113,7 +117,7 @@ class Lock
 
     releaseLock = =>
       @client.publish(key, 'release')
-      @client.delAsync(key)
+      @client.evalAsync(unlockScript, 1, key, value)
 
     acquireLockAndResolve()
     .finally ->
