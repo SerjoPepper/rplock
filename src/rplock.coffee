@@ -49,10 +49,7 @@ class Lock
       unless Lock.localKeys[key]
         clear()
         Lock.localKeys[key] = true
-        p = if typeof resolver is 'function'
-          promise.resolve co resolver
-        else
-          promise.resolve resolver
+        p = promise.resolve co resolver
         p.finally(release)
         p.then(defer.resolve.bind(defer), defer.reject.bind(defer))
       else
@@ -108,10 +105,7 @@ class Lock
             promise.delay(pollingTimeout).then -> _promise.resolve()
             _promise.promise.then(acquireLockAndResolve)
           else
-            if typeof resolver is 'function'
-              promise.resolve co resolver
-            else
-              promise.resolve resolver
+            promise.resolve co resolver
         else
           promise.reject('can\'t acquire lock')
 
